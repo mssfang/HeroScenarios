@@ -14,6 +14,65 @@
           <target>1.8</target>
         </configuration>
       </plugin>
+      
+      <plugin>
+
+        <groupId>org.codehaus.mojo</groupId>
+
+        <artifactId>exec-maven-plugin</artifactId>
+
+        <version>1.4.0</version>
+
+        <configuration>
+
+          <mainClass>com.microsoft.azure.contentmoderator.samples.Samples</mainClass>
+
+        </configuration>
+
+      </plugin>
+      
+      
+      <plugin>
+
+        <artifactId>maven-assembly-plugin</artifactId>
+
+        <executions>
+
+          <execution>
+
+            <phase>package</phase>
+
+            <goals>
+
+              <goal>attached</goal>
+
+            </goals>
+
+            <configuration>
+
+              <descriptorRefs>
+
+                <descriptorRef>jar-with-dependencies</descriptorRef>
+
+              </descriptorRefs>
+
+              <archive>
+
+                <manifest>
+
+                  <mainClass>com.microsoft.azure.contentmoderator.samples.Samples</mainClass>
+
+                </manifest>
+
+              </archive>
+
+            </configuration>
+
+          </execution>
+
+        </executions>
+
+      </plugin>
     </plugins>
   </build>
   <repositories>
@@ -29,5 +88,85 @@
       <artifactId>client-sdk</artifactId>
       <version>1.1.0</version>
 	</dependency>
+	<dependency>
+	    <groupId>com.google.code.gson</groupId>
+	    <artifactId>gson</artifactId>
+	    <version>2.8.1</version>
+	</dependency>
+	
+	<dependency>
+	    <groupId>com.squareup.okhttp</groupId>
+	    <artifactId>okhttp</artifactId>
+	    <version>2.7.5</version>
+	</dependency>
+	
+	<dependency>
+	  <groupId>org.apache.httpcomponents</groupId>
+	  <artifactId>httpclient</artifactId>
+	  <version>4.5</version>
+	</dependency>
+	<dependency>
+	  <groupId>org.apache.httpcomponents</groupId>
+	  <artifactId>httpcore</artifactId>
+	  <version>4.4.6</version>
+	</dependency>
+
+
+
+    <dependency>
+
+      <groupId>com.microsoft.azure</groupId>
+
+      <artifactId>azure</artifactId>
+
+      <version>1.3.0</version>
+
+    </dependency>
+
+    <dependency>
+
+      <groupId>commons-net</groupId>
+
+      <artifactId>commons-net</artifactId>
+
+      <version>3.3</version>
+
+    </dependency>
+
+	<dependency>
+      <groupId>com.microsoft.azure.cognitiveservices</groupId>
+      <artifactId>azure-cognitiveservices-contentmoderator</artifactId>
+      <version>0.0.1-beta</version>
+    </dependency>
+    
+    
+    <dependency>
+
+      <groupId>com.microsoft.azure</groupId>
+
+      <artifactId>azure</artifactId>
+
+      <version>1.9.0</version>
+
+    </dependency>
+    <dependency>
+
+      <groupId>com.microsoft.azure.cognitiveservices</groupId>
+
+      <artifactId>azure-cognitiveservices-luis-authoring</artifactId>
+
+      <version>1.0.2-beta</version>
+
+    </dependency>
+
+    <dependency>
+
+      <groupId>com.microsoft.azure.cognitiveservices</groupId>
+
+      <artifactId>azure-cognitiveservices-luis-runtime</artifactId>
+
+      <version>1.0.2-beta</version>
+
+    </dependency>
   </dependencies> 
 </project>
