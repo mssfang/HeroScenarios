@@ -10,7 +10,7 @@ public class BingSpellCheck {
     static String path = "/bing/v7.0/spellcheck";
 
     // NOTE: Replace this example key with a valid subscription key.
-    static String key = "a09c380400584d4792d10e2fd2114180";
+    static String key = "a8c484ddb5974c39b7ada08956ba2205";
 
     static String mkt = "en-US";
     static String mode = "proof";

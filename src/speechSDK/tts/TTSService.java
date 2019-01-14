@@ -52,7 +52,7 @@ public class TTSService {
      // Free: https://azure.microsoft.com/en-us/try/cognitive-services/?api=speech-services
      // Paid: https://go.microsoft.com/fwlink/?LinkId=872236
 
- 	Authentication auth = new Authentication("61a42d71ad7b47a9b4b47d5b20ecc61f");
+ 	Authentication auth = new Authentication("f54ba74e83904bd593ec228acde2d22b");
      String accessToken = auth.GetAccessToken();
 
      HttpsURLConnection webRequest = HttpsConnection.getHttpsConnection(ttsServiceUri);

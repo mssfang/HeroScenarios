@@ -139,34 +139,44 @@
       <version>0.0.1-beta</version>
     </dependency>
     
+    <dependency>
+	    <groupId>com.microsoft.azure.cognitiveservices</groupId>
+	    <artifactId>azure-cognitiveservices-textanalytics</artifactId>
+	    <version>1.0.2-beta</version>
+	</dependency>
     
     <dependency>
-
+	    <groupId>com.microsoft.azure.cognitiveservices</groupId>
+	    <artifactId>azure-cognitiveservices-spellcheck</artifactId>
+	    <version>1.0.2</version>
+	</dependency>
+    
+    <dependency>
+	    <groupId>com.microsoft.azure.cognitiveservices</groupId>
+	    <artifactId>azure-cognitiveservices-contentmoderator</artifactId>
+	    <version>1.0.2-beta</version>
+	</dependency>
+    
+    <dependency>
       <groupId>com.microsoft.azure</groupId>
-
       <artifactId>azure</artifactId>
-
       <version>1.9.0</version>
-
     </dependency>
+    
     <dependency>
-
       <groupId>com.microsoft.azure.cognitiveservices</groupId>
-
       <artifactId>azure-cognitiveservices-luis-authoring</artifactId>
-
       <version>1.0.2-beta</version>
-
     </dependency>
 
     <dependency>
-
       <groupId>com.microsoft.azure.cognitiveservices</groupId>
-
       <artifactId>azure-cognitiveservices-luis-runtime</artifactId>
-
       <version>1.0.2-beta</version>
-
     </dependency>
+    
+
+    
+    
   </dependencies> 
 </project>
