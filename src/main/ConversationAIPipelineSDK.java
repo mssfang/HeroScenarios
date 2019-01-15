@@ -54,7 +54,6 @@ import com.microsoft.azure.cognitiveservices.vision.contentmoderator.ContentMode
 import com.microsoft.azure.cognitiveservices.vision.contentmoderator.TextModerations;
 import com.microsoft.azure.cognitiveservices.vision.contentmoderator.models.AzureRegionBaseUrl;
 import com.microsoft.azure.cognitiveservices.vision.contentmoderator.models.Classification;
-import com.microsoft.azure.cognitiveservices.vision.contentmoderator.models.PII;
 import com.microsoft.azure.cognitiveservices.vision.contentmoderator.models.Screen;
 import com.microsoft.azure.cognitiveservices.vision.contentmoderator.models.ScreenTextOptionalParameter;
 import com.microsoft.cognitiveservices.speech.CancellationDetails;
@@ -82,7 +81,6 @@ public class ConversationAIPipelineSDK {
 		String recognizedSpeech = "";
 		
 		try {
-	            int exitCode = 1;
 	            SpeechConfig config = SpeechConfig.fromSubscription(speechSubscriptionKey, serviceRegion);
 	            assert(config != null);
 	            
@@ -99,9 +97,7 @@ public class ConversationAIPipelineSDK {
 
 	            if (result.getReason() == ResultReason.RecognizedSpeech) {
 	            	recognizedSpeech = result.getText();
-	                System.out.println("We recognized: " + recognizedSpeech);
-	                
-	                exitCode = 0;
+	                System.out.println("We recognized: " + recognizedSpeech);	                
 	            }
 	            else if (result.getReason() == ResultReason.NoMatch) {
 	                System.out.println("NOMATCH: Speech could not be recognized.");
@@ -159,7 +155,10 @@ public class ConversationAIPipelineSDK {
 	
 	// Step 4: Bing Spell Check (Spell Check) 
 	private static String spellCheck(String market, String mode, String text) {
-		
+		if (text == null || text.isEmpty()) {
+			return "";
+			
+		}
 		BingSpellCheckAPI  bingSpellCheckAPI  = BingSpellCheckManager.authenticate("a8c484ddb5974c39b7ada08956ba2205");
 		BingSpellCheckOperations bingSpellCheckOperations = bingSpellCheckAPI.bingSpellCheckOperations();
 		SpellCheckerOptionalParameter spellCheckerOptionalParameter  = new SpellCheckerOptionalParameter();
@@ -173,39 +172,23 @@ public class ConversationAIPipelineSDK {
 		if (spellingFlaggedTokens.size() == 0) {
 			return text;
 		}
-		
-		StringBuilder sb = new StringBuilder(); 
-		
+		String tempText = text;
 		for (SpellingFlaggedToken spellingFlaggedToken : spellingFlaggedTokens) {
-			
-			
-			
 			System.out.println("token = " + spellingFlaggedToken.token());
 			List<SpellingTokenSuggestion> suggestions = spellingFlaggedToken.suggestions();
-			
-			
 			for (SpellingTokenSuggestion spellingTokenSuggestion : suggestions) {
-				System.out.println("suggestion = " + spellingTokenSuggestion.suggestion()
-							+ ", score = " + spellingTokenSuggestion.score());
+				System.out.println(
+						"suggestion = " + spellingTokenSuggestion.suggestion()
+					  + ", score = " + spellingTokenSuggestion.score());
 				String sug = spellingTokenSuggestion.suggestion();
-				
-				
-				
 				if (sug != null && !sug.isEmpty()) {
-					sb.append(sug).append(" ");
+					tempText.replaceAll(spellingFlaggedToken.token(), sug);
 					break;
 				}
 			}
 		}
 		
-		
-		if (sb.length() > 0)
-			sb.setLength(sb.length()- 1);
-		
-		System.out.println("sb = " + sb.toString());
-		
-		
-		return sb.toString();
+		return tempText;
 	}
 	
 	
@@ -234,12 +217,6 @@ public class ConversationAIPipelineSDK {
 			if (classification.reviewRecommended()) {
 				return "Review Recommended: category1 score = " + classification.category1().score() + ", category2 score = " + classification.category2().score() + ", category3 score = " + classification.category3().score() ;
 			}
-		}
-		PII pii = screen.pII();
-		if (pii == null) {
-			System.out.println("pii is NULL");
-		} else {
-			System.out.println("pii = (address) " + pii.address().toString() + ", (email) "+ pii.email().toString() + ", (ipa) "+ pii.iPA().toString() + ", (phone) "+ pii.phone().toString() + ", (ssn) "+ pii.sSN().toString());			
 		}
 		return screen.autoCorrectedText();
 	}
@@ -315,6 +292,7 @@ public class ConversationAIPipelineSDK {
 	        System.out.println("Creating a new \"FindFlights\" intent with two utterances");
 	        String utteranceFindEconomyToMadrid = "find flights in economy to Madrid";
 	        String utteranceFindFirstToLondon = "find flights to London in first class";
+	        String utteranceFindEconomyToParis = "find flights to Paris in economy class";
 	        String intentName = "FindFlights";
 	
 	        UUID intendId = authoringClient.models().addIntent()
@@ -348,8 +326,20 @@ public class ConversationAIPipelineSDK {
 	                getEntityLabelObject(utteranceFindFirstToLondon, "Class", "first")
 	            ));
 	
+	        
+	        ExampleLabelObject exampleLabelObject3 = new ExampleLabelObject()
+		            .withText(utteranceFindEconomyToParis)
+		            .withIntentName(intentName)
+		            .withEntityLabels(Arrays.asList(
+		                getEntityLabelObject(utteranceFindEconomyToParis, "Flight", "Paris in economy class"),
+		                getEntityLabelObject(utteranceFindEconomyToParis, "Destination", "Paris"),
+		                getEntityLabelObject(utteranceFindEconomyToParis, "Class", "economy")
+		            ));
+		
+	        
+	        
 	        List<BatchLabelExample> utterancesResult = authoringClient.examples()
-	            .batch(appId, versionId, Arrays.asList(exampleLabelObject1, exampleLabelObject2));
+	            .batch(appId, versionId, Arrays.asList(exampleLabelObject1, exampleLabelObject2, exampleLabelObject3));
 	
 	        System.out.println("Utterances added to the " + intentName + " intent");
 	
@@ -398,7 +388,7 @@ public class ConversationAIPipelineSDK {
 	}
 
 	
-	static EntityLabelObject getEntityLabelObject(String utterance, String entityName, String value) {
+	private static EntityLabelObject getEntityLabelObject(String utterance, String entityName, String value) {
 	    return new EntityLabelObject()
 	        .withEntityName(entityName)
 	        .withStartCharIndex(utterance.indexOf(value))
@@ -411,9 +401,11 @@ public class ConversationAIPipelineSDK {
      * @param runtimeClient instance of the LUIS Runtime API client
      * @return true if sample runs successfully
      */
-    public static String runLuisRuntimeSample(LuisRuntimeAPI runtimeClient, String text) {
+    private static String runLuisRuntimeSample(LuisRuntimeAPI runtimeClient, String text) {
         try {
-            appId = UUID.fromString("f0865180-ff5d-4f12-a720-96182d666a7c");            
+        	
+        	// TODO: replace the application ID that every time you have republish the application
+            appId = UUID.fromString("223c3a69-c59a-4e53-b163-181c6d25dbf2");            
             //=============================================================
             // This will execute a LUIS prediction for a "find second class flight to new york" utterance
             String query = text;
@@ -455,7 +447,7 @@ public class ConversationAIPipelineSDK {
     // Step 7: QnA Maker (Retrieve Response)   Missing Java SDK
 	// Step 8: Text Translater (Translate Text)  Missing Translator SDK in Maven repo
 	// Step 9: Text to Speech (Still using API) 
-	public static void textToSpeech(String textToSynthesize) {
+	private static void textToSpeech(String textToSynthesize) {
 		 String outputFormat = AudioOutputFormat.Riff24Khz16BitMonoPcm;
 	     String deviceLanguage = "en-US";
 	     String genderName = Gender.Male;
@@ -511,45 +503,43 @@ public class ConversationAIPipelineSDK {
 	}
 	
 	
+	
     public static void main(String[] args) {
 
     	Map<String, String> languageMap = new HashMap<String, String>();
     	languageMap.put("en", "en-US");
 
         System.out.println("This is a simple example of Conversation AI pipeline,\n"
-                + "Please try to ask one of below questions: \n"
-//                + "1, \"Call\" (ans: 777-777-7777) \n"
-//                + "2, \"Phone\" (ans: 111-111-1111) \n"
-//                + "3, \"Address\" (ans: Microsoft Way 1, Redmond, WA) \n"
-//                + "4, \"Email\" (ans: lol@microsoft.com) \n"
-//                
-        		+ "1, \"find flights to London in first class\" (ans: london in first class, testing testing)"
-        		
+                + "Please try to ask one of below questions: \n"          
+        		+ "1, \"find flights to London in first class\" (ans: london in first class, testing testing) \n"
+        		+ "2, \"find flights to Paris in economy class\" (ans: hello paris) \n"
         		);
    	 /**
    	  *  	1, Process/Filter Speech Stream
    	  * */
    		// Step 1: Speech Service (Speech To Text)
+        System.out.println("\n---------------Step 1: Speech to text---------------");
    		String recognizedText  = recognizeSpeech("f54ba74e83904bd593ec228acde2d22b", "westus");
-   		System.out.println("\nStep 1, recognized text = " + recognizedText);
+   		System.out.println("recognized text = " + recognizedText);
    		
    		// Step 2: Text Analytics (Language Detection)
+   		System.out.println("\n---------------Step 2: Text Analytics---------------");
    		String detectLangResp = detactFirstLanguage(recognizedText);
-   		System.out.println("\nStep 2, detect language = " + detectLangResp);
+   		System.out.println("detect language = " + detectLangResp);
    		
 //   		// Step 3: Text Translator (Translate Text)        // Missing Translator SDK in Maven repo
+   		System.out.println("\n---------------Step 3: Text Translator------[SDK MISSING]---------");
+
 //        String enText = translateText(recognizedText, "en");
 //   		System.out.println("\nStep 3, translate to english, text = " + enText);
    		
 //   		// Step 4: Bing Spell Check (Spell Check) 
-   		System.out.println("\nStep 4: Spelling check");
-//   		String enText = "find flights to London in first class";
+   		System.out.println("\n---------------Step 4: Spelling check---------------");
    		String correctedText = spellCheck(languageMap.get(detectLangResp), "proof", recognizedText);
    		System.out.println("corrected text = " + correctedText);
    
    		// Step 5: Content Moderator (Explicit Content Rec) 
-   		System.out.println("\nStep 5, content moderator");
-//   		String moderatedText =  contentModerator("These are all UK phone numbers, the last two being Microsoft UK support numbers: +44 870 608 4000 or 0344 800 2400 or 0800 820 3300. dumb!");
+   		System.out.println("\n---------------Step 5: content moderator---------------");
    		String moderatedText =  contentModerator(correctedText);
    		System.out.println("content moderated text = " + moderatedText);
 
@@ -559,12 +549,11 @@ public class ConversationAIPipelineSDK {
    		 *  	using QnA(https://www.qnamaker.ai/) to create Knowledge base
    		 **/
    			// Step 6: LUIS (Recognize Intent)   			
-   			System.out.println("\nStep 6, LUIS");
-//   			String question = luis("find flights to London in first class");
+   			System.out.println("\n---------------Step 6: LUIS---------------");
    			String question = luis(moderatedText);
 
    			// Step 7: QnA Maker (Retrieve Response)   Missing Java SDK
-   			System.out.println("\nStep 7, QnA Maker");	
+   			System.out.println("\n---------------Step 7: QnA Maker--------[SDK MISSING]-------");	
 			String ans = GetAnswer.getAns(question);    			
    	    	String topAns = GetAnswer.getTopAns(ans);
    	    	System.out.println("answer = " + topAns);
@@ -573,18 +562,17 @@ public class ConversationAIPipelineSDK {
    		 *  	3, Generate Output
    		 **/
    			// Step 8: Text Translater (Translate Text)    	    	    		 // Missing Translator SDK in Maven repo
-   	    	System.out.println("\nStep 8, Text Translator");
+   	    	System.out.println("\n---------------Step 8: Text Translator------[SDK MISSING]---------");
 //   	    	String translatedTopAns = translateText(topAns, detectLangResp);
 //   	    	System.out.println("translated top ans is, " + translatedTopAns);
    			
    			// Step 9: Speech Service (Text To Speech)						// Missing SDK API, there are some classes are missing but found AudioInputStrean class
-    		System.out.println("\nStep 9, Text to Speech");
+    		System.out.println("\n---------------Step 9: Text to Speech-------[SDK MISSING]--------");
     		textToSpeech(topAns);
    			
+    		
+    		
+    		
    			System.out.println("---------------- End of Conversation AI Pipeline --------------------");
-   		
-   		
-   		
-   		
     }
 }

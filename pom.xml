@@ -156,7 +156,6 @@
 	    <artifactId>azure-cognitiveservices-contentmoderator</artifactId>
 	    <version>1.0.2-beta</version>
 	</dependency>
-    
     <dependency>
       <groupId>com.microsoft.azure</groupId>
       <artifactId>azure</artifactId>
