@@ -1,11 +1,11 @@
-conversation-ai-pipeline-API/.settings/
-conversation-ai-pipeline-API/target/
-conversation-ai-pipeline-API/output.pcm
-conversation-ai-pipeline-API/bin/
+/conversation-ai-pipeline-API/.settings/
+/conversation-ai-pipeline-API/target/
+/conversation-ai-pipeline-API/output.pcm
+/conversation-ai-pipeline-API/bin/
 
-conversation-ai-pipeline-SDK/target/
-conversation-ai-pipeline-SDK/.settings/
-conversation-ai-pipeline-SDK/output.pcm
-conversation-ai-pipeline-SDK/bin/
+/conversation-ai-pipeline-SDK/target/
+/conversation-ai-pipeline-SDK/.settings/
+/conversation-ai-pipeline-SDK/output.pcm
+/conversation-ai-pipeline-SDK/bin/
 
 .idea/
