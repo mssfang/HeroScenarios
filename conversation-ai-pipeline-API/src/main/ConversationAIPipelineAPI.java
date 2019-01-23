@@ -13,7 +13,7 @@ import textTranslator.Translate;
 
 public class ConversationAIPipelineAPI {
 
-	public static String detectLanguage(String text, String TEXT_ANALYSTICS, String host, String path) {
+	private static String detectLanguage(String text, String TEXT_ANALYSTICS, String host, String path) {
 		
 		if (text == null || text.isEmpty()) return "";
 		
@@ -36,7 +36,7 @@ public class ConversationAIPipelineAPI {
 		return "";
 	}
 	
-	public static String translateText(String text, String translateTo, String subscriptionKey) {
+	private static String translateText(String text, String translateTo, String subscriptionKey) {
 		String translatedText = text;
 		try {
 			Translate translateRequest = new Translate(subscriptionKey);
@@ -47,8 +47,7 @@ public class ConversationAIPipelineAPI {
 		return translatedText;
 	}
 	
-	
-	
+
 	
 	public static void main(String[] args) {
 	
@@ -58,8 +57,7 @@ public class ConversationAIPipelineAPI {
 				+ "2, \"Phone\" (ans: 111-111-1111) \n"
 				+ "3, \"Address\" (ans: Microsoft Way 1, Redmond, WA) \n"
 				+ "4, \"Email\" (ans: lol@microsoft.com) \n");
-		
-				
+
 		
 	 /**
 	  *  	1, Process/Filter Speech Stream
@@ -130,9 +128,7 @@ public class ConversationAIPipelineAPI {
 		// Step 9: Speech Service (Text To Speech)
 	    System.out.println("\n---------------Step 9: Text to Speech---------------");
     	TTSSample.textToSpeech(translatedTopAns, SPEECH);
-    	
-    	
-    	
+
 		
 		System.out.println("---------------- End of Conversation AI Pipeline --------------------");
 	}

@@ -67,6 +67,7 @@ import qNa.GetAnswer;
 import speechSDK.tts.AudioOutputFormat;
 import speechSDK.tts.Gender;
 import speechSDK.tts.TTSService;
+import textTranslator.Translate;
 
 public class ConversationAIPipelineSDK {
 	
@@ -151,6 +152,16 @@ public class ConversationAIPipelineSDK {
 	}
 	
 	// Step 3: Text Translator (Translate Text) Missing SDK
+	private static String translateText(String text, String translateTo, String subscriptionKey) {
+		String translatedText = text;
+		try {
+			Translate translateRequest = new Translate(subscriptionKey);
+			translatedText = Translate.getTranslatedText( translateRequest.Post(text, translateTo));
+		} catch (Exception e) {
+            System.out.println(e);
+	    }
+		return translatedText;
+	}
 	
 	
 	// Step 4: Bing Spell Check (Spell Check) 
@@ -504,8 +515,8 @@ public class ConversationAIPipelineSDK {
     	Map<String, String> languageMap = new HashMap<String, String>();
     	languageMap.put("en", "en-US");
 
-        System.out.println("This is a simple example of Conversation AI pipeline,\n"
-                + "Please try to ask one of below questions: \n"          
+        System.out.println(
+                "Please try to ask one of below questions: \n"          
         		+ "1, \"find flights to London in first class\" (ans: london in first class, testing testing) \n"
         		+ "2, \"find flights to Paris in economy class\" (ans: hello paris) \n"
         		);
@@ -523,13 +534,14 @@ public class ConversationAIPipelineSDK {
    		System.out.println("\n---------------Step 2: Text Analytics---------------");
    		String detectLangResp = detactFirstLanguage(recognizedText, TEXT_ANALYSTICS);
    		System.out.println("detect language = " + detectLangResp);
-   		
-//   		// Step 3: Text Translator (Translate Text)        // Missing Translator SDK in Maven repo
+
+   		// Step 3: Text Translator (Translate Text)        // Missing Translator SDK in Maven repo
+		String TRANSLATOR = System.getenv("Translator");
    		System.out.println("\n---------------Step 3: Text Translator------[SDK MISSING]---------");
-//        String enText = translateText(recognizedText, "en");
-//   		System.out.println("\nStep 3, translate to english, text = " + enText);
-   		
-//   		// Step 4: Bing Spell Check (Spell Check) 
+   		recognizedText = translateText(recognizedText, "en", TRANSLATOR);
+    	System.out.println("translated top ans is, " + recognizedText);
+    	
+    	// Step 4: Bing Spell Check (Spell Check) 
    		String SPELL_CHECK =  System.getenv("SpellCheck");
    		System.out.println("\n---------------Step 4: Spelling check---------------");
    		String correctedText = spellCheck(languageMap.get(detectLangResp), "proof", recognizedText, SPELL_CHECK);
@@ -562,8 +574,8 @@ public class ConversationAIPipelineSDK {
    		 **/
    			// Step 8: Text Translater (Translate Text)    	    	    		 // Missing Translator SDK in Maven repo
    	    	System.out.println("\n---------------Step 8: Text Translator------[SDK MISSING]---------");
-//   	    	String translatedTopAns = translateText(topAns, detectLangResp);
-//   	    	System.out.println("translated top ans is, " + translatedTopAns);
+   	    	topAns = translateText(topAns, detectLangResp, TRANSLATOR);
+   	    	System.out.println("translated top ans is, " + topAns);
    			
    			// Step 9: Speech Service (Text To Speech)						// Missing SDK API, there are some classes are missing but found AudioInputStrean class
    	    	System.out.println("\n---------------Step 9: Text to Speech-------[SDK MISSING]--------");
