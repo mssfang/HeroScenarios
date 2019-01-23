@@ -63,12 +63,13 @@ public class Translate {
         		 break;
         	 JsonObject jsonObj = json.get(i).getAsJsonObject();
         	 JsonArray translations = jsonObj.getAsJsonArray("translations");
-        	 if (translations == null) return "";
+        	 assert(translations != null);
         	 for (int j = 0; j < translations.size(); j++) {
-        		 if (translatedText != null) break;
+        		 assert(translatedText != null);
         		 JsonObject translation = translations.get(j).getAsJsonObject();
+        		 assert(translation != null);
         		 JsonElement text = translation.get("text");
-        		 if (text == null) return "";
+        		 assert(text != null);
         		 translatedText = text.getAsString();
         	 }
          }

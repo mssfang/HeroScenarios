@@ -78,7 +78,8 @@ public class ConversationAIPipelineSDK {
     
 	// Step 1: Speech Service (Speech To Text)
 	private static String recognizeSpeech(String speechSubscriptionKey, String serviceRegion) {
-		
+        assert(speechSubscriptionKey != null);
+        assert(serviceRegion != null);
 		String recognizedSpeech = "";
 		
 		try {
@@ -102,6 +103,7 @@ public class ConversationAIPipelineSDK {
 	            }
 	            else if (result.getReason() == ResultReason.NoMatch) {
 	                System.out.println("NOMATCH: Speech could not be recognized.");
+	                System.exit(1);
 	            }
 	            else if (result.getReason() == ResultReason.Canceled) {
 	                CancellationDetails cancellation = CancellationDetails.fromResult(result);
@@ -112,12 +114,11 @@ public class ConversationAIPipelineSDK {
 	                    System.out.println("CANCELED: ErrorDetails=" + cancellation.getErrorDetails());
 	                    System.out.println("CANCELED: Did you update the subscription info?");
 	                }
+	                System.exit(1);
 	            }
-
 	            reco.close();
 	        } catch (Exception ex) {
 	            System.out.println("Unexpected exception: " + ex.getMessage());
-
 	            assert(false);
 	            System.exit(1);
 	        }
@@ -125,40 +126,62 @@ public class ConversationAIPipelineSDK {
 	}
 	
 	// Step 2: Text Analytics (Language Detection)
-	private static String detactFirstLanguage(String text, String subscriptionKey) {
-		String detactLan = "";
+	private static String detactFirstLanguage(String text, String subscriptionKey) throws Exception {
+		assert(text != null);
+		assert(subscriptionKey != null);
+
 		TextAnalyticsAPI taAPI = TextAnalyticsManager.authenticate(AzureRegions.WESTCENTRALUS, subscriptionKey);
+		assert(taAPI != null);
+		
 		TextAnalytics ta = taAPI.textAnalytics();
+		assert(ta != null);
+		
 		Input input = new Input();
+		assert(input != null);
+		
 		input.withId("1").withText(text);
 		List<Input> documents = new ArrayList<>();
 		documents.add(input);
 		
 		DetectLanguageOptionalParameter detectLanguageOptionalParameter = new DetectLanguageOptionalParameter();
+		assert(detectLanguageOptionalParameter != null);
+		
 		detectLanguageOptionalParameter.withDocuments(documents);
 		LanguageBatchResult languageBatchResult = ta.detectLanguage(detectLanguageOptionalParameter);
+		assert(languageBatchResult != null);
 		
 		List<LanguageBatchResultItem> resp = languageBatchResult.documents();
+		assert(resp != null);
+		
 		for (LanguageBatchResultItem LanguageBatchResultItem : resp) {
+			assert(LanguageBatchResultItem != null);
+		
 			List<DetectedLanguage> detectedLanguages = LanguageBatchResultItem.detectedLanguages();
 			for (DetectedLanguage lang : detectedLanguages) {
+				assert(lang != null);
+			
 				String langName = lang.iso6391Name();				
 				if (langName != null && !langName.isEmpty()) {
 					return langName;
 				}
 			}
 		}
-		return detactLan;
+		
+		throw new Exception("Error: no match language found");
 	}
 	
 	// Step 3: Text Translator (Translate Text) Missing SDK
 	private static String translateText(String text, String translateTo, String subscriptionKey) {
+		assert(text != null);
+		assert(translateTo != null);
+		assert(subscriptionKey != null);
 		String translatedText = text;
 		try {
 			Translate translateRequest = new Translate(subscriptionKey);
-			translatedText = Translate.getTranslatedText( translateRequest.Post(text, translateTo));
+			translatedText = Translate.getTranslatedText(translateRequest.Post(text, translateTo));
 		} catch (Exception e) {
-            System.out.println(e);
+            System.out.format("<Text Translator> Error: %s", e.getMessage());
+            System.exit(1);
 	    }
 		return translatedText;
 	}
@@ -166,18 +189,28 @@ public class ConversationAIPipelineSDK {
 	
 	// Step 4: Bing Spell Check (Spell Check) 
 	private static String spellCheck(String market, String mode, String text, String subscriptionKey) {
-		if (text == null || text.isEmpty()) {
-			return "";
-			
-		}
+		assert(market != null);
+		assert(mode != null);
+		assert(text != null);
+		assert(subscriptionKey != null);
+	
 		BingSpellCheckAPI bingSpellCheckAPI  = BingSpellCheckManager.authenticate(subscriptionKey);
-		BingSpellCheckOperations bingSpellCheckOperations = bingSpellCheckAPI.bingSpellCheckOperations();
+		assert(bingSpellCheckAPI != null);
+
+		BingSpellCheckOperations bingSpellCheckOperations = bingSpellCheckAPI.bingSpellCheckOperations();		
+		assert(bingSpellCheckOperations != null);
+
 		SpellCheckerOptionalParameter spellCheckerOptionalParameter  = new SpellCheckerOptionalParameter();
+		assert(spellCheckerOptionalParameter != null);
 		
 		spellCheckerOptionalParameter.withMarket(market).withMode(mode);
+
 		SpellCheck spellCheck = bingSpellCheckOperations.spellChecker(text, spellCheckerOptionalParameter);
-		
+		assert(spellCheck != null);
+
 		List<SpellingFlaggedToken> spellingFlaggedTokens = spellCheck.flaggedTokens();		
+		assert(spellingFlaggedTokens != null);
+		
 		System.out.println("Spelling flagged tokens size = " + spellingFlaggedTokens.size());
 		
 		if (spellingFlaggedTokens.size() == 0) {
@@ -187,10 +220,14 @@ public class ConversationAIPipelineSDK {
 		for (SpellingFlaggedToken spellingFlaggedToken : spellingFlaggedTokens) {
 			System.out.println("token = " + spellingFlaggedToken.token());
 			List<SpellingTokenSuggestion> suggestions = spellingFlaggedToken.suggestions();
+			assert(suggestions != null);
+
 			for (SpellingTokenSuggestion spellingTokenSuggestion : suggestions) {
-				System.out.println(
-						"suggestion = " + spellingTokenSuggestion.suggestion()
+				assert(spellingTokenSuggestion != null);
+				
+				System.out.println("suggestion = " + spellingTokenSuggestion.suggestion()
 					  + ", score = " + spellingTokenSuggestion.score());
+				
 				String sug = spellingTokenSuggestion.suggestion();
 				if (sug != null && !sug.isEmpty()) {
 					tempText.replaceAll(spellingFlaggedToken.token(), sug);
@@ -205,15 +242,21 @@ public class ConversationAIPipelineSDK {
 	
 	// Step 5: Content Moderator
 	private static String contentModerator(String text, String subscriptionKey) {
-		if (text== null || text.isEmpty()) return "";
+		assert(text != null);
+		assert(subscriptionKey != null);
+		
 		ContentModeratorClient contentModeratorClient = ContentModeratorManager.authenticate(AzureRegionBaseUrl.WESTCENTRALUSAPICOGNITIVEMICROSOFTCOM, subscriptionKey);
+		assert(contentModeratorClient != null);
+		
 		TextModerations textModerations = contentModeratorClient.textModerations();
+		assert(textModerations != null);
 		
 		ScreenTextOptionalParameter screenTextOptionalParameter = new ScreenTextOptionalParameter();
+		assert(screenTextOptionalParameter != null);
 		screenTextOptionalParameter.withAutocorrect(true).withPII(true).withClassify(true);
 		
 		Screen screen = textModerations.screenText("text/plain", text.getBytes(), screenTextOptionalParameter);
-		
+		assert(screen != null);
 				
 		System.out.println("auto corrected text = " + screen.autoCorrectedText());
 		System.out.println("language = " + screen.language());
@@ -236,14 +279,18 @@ public class ConversationAIPipelineSDK {
 	// Step 6: LUIS
 	private static String luis(String text, String luisAuthoringKey) {
 		try {
-			LUISAuthoringClient authoringClient = LUISAuthoringManager.authenticate(EndpointAPI.US_WEST, luisAuthoringKey);			
+			LUISAuthoringClient authoringClient = LUISAuthoringManager.authenticate(EndpointAPI.US_WEST, luisAuthoringKey);
+			assert(authoringClient != null);
+			
 			System.out.println("Result of run Luis Authoring = " + runLuisAuthoring(authoringClient));		
 			LuisRuntimeAPI runtimeClient = LuisRuntimeManager
 	                .authenticate(com.microsoft.azure.cognitiveservices.language.luis.runtime.EndpointAPI.US_WEST, luisAuthoringKey);
+			assert(runtimeClient != null);
+
 			return runLuisRuntimeSample(runtimeClient, text);
 		} catch (Exception e) {
-			System.out.println("Erorr : " + e.getMessage());
-			e.printStackTrace();
+			System.out.println("<LUIS> Erorr : " + e.getMessage());
+			e.printStackTrace(); 
 		}
 		return "";
 	}
@@ -258,8 +305,7 @@ public class ConversationAIPipelineSDK {
 						.withCulture("en-us")
 						);
         	} catch (Exception ex) {
-        		// TODO: can't find an appropriate function call to get the exist status of the app 
-        		System.out.println("Exception is " + ex.getMessage());
+        		System.out.println("<LUIS - runLuisAuthoring> Error: " + ex.getMessage());
         		return false;
         	}
         	
@@ -455,56 +501,62 @@ public class ConversationAIPipelineSDK {
     
     
 	// Step 9: Text to Speech (Still using API) 
-	private static void textToSpeech(String textToSynthesize, String subscriptionKey) {
-		 String outputFormat = AudioOutputFormat.Riff24Khz16BitMonoPcm;
-	     String deviceLanguage = "en-US";
-	     String genderName = Gender.Male;
-	     String voiceName = "Microsoft Server Speech Text to Speech Voice (en-US, Guy24KRUS)";
+	private static void textToSpeech(String textToSynthesize, String language, String subscriptionKey) {
+		
+		assert(textToSynthesize != null);	
+		assert(subscriptionKey != null);	
 
-	     try{
-	     	byte[] audioBuffer = TTSService.Synthesize(textToSynthesize, outputFormat, deviceLanguage, genderName, voiceName, subscriptionKey);
-	     	
-	     	// write the pcm data to the file
-	     	String outputWave = ".\\output.pcm";
-	     	File outputAudio = new File(outputWave);
-	     	FileOutputStream fstream = new FileOutputStream(outputAudio);
-	         fstream.write(audioBuffer);
-	         fstream.flush();
-	         fstream.close();
-	         
-	         
-	         // specify the audio format 
-        	AudioFormat audioFormat = new AudioFormat(
-        			AudioFormat.Encoding.PCM_SIGNED,
-            		24000,
-            		16,
-            		1,
-            		1 * 2,
-            		24000,
-            		false);
-        	
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(outputWave));
-            
-            DataLine.Info dataLineInfo = new DataLine.Info(SourceDataLine.class,
-                    audioFormat, AudioSystem.NOT_SPECIFIED);
-            SourceDataLine sourceDataLine = (SourceDataLine) AudioSystem
-                    .getLine(dataLineInfo);
-            sourceDataLine.open(audioFormat);
-            sourceDataLine.start();
-            System.out.println("start to play the wave:");
-            /*
-             * read the audio data and send to mixer
-             */
-            int count;
-            byte tempBuffer[] = new byte[4096];
-            while ((count = audioInputStream.read(tempBuffer, 0, tempBuffer.length)) >0) {
-                    sourceDataLine.write(tempBuffer, 0, count);
-            }
-     
-            sourceDataLine.drain();
-            sourceDataLine.close();
-            audioInputStream.close();
-            
+		String outputFormat = AudioOutputFormat.Riff24Khz16BitMonoPcm;
+//		String deviceLanguage = "en-US";
+		String deviceLanguage = language;
+
+		String genderName = Gender.Male;
+		String voiceName = "Microsoft Server Speech Text to Speech Voice (en-US, Guy24KRUS)";
+
+		try{
+			byte[] audioBuffer = TTSService.Synthesize(textToSynthesize, outputFormat, deviceLanguage, genderName, voiceName, subscriptionKey);
+ 	
+			// write the pcm data to the file
+			String outputWave = ".\\output.pcm";
+			File outputAudio = new File(outputWave);
+			FileOutputStream fstream = new FileOutputStream(outputAudio);
+			fstream.write(audioBuffer);
+			fstream.flush();
+			fstream.close();
+	 
+	 
+			// specify the audio format 
+			AudioFormat audioFormat = new AudioFormat(
+				AudioFormat.Encoding.PCM_SIGNED,
+				24000,
+				16,
+				1,
+				1 * 2,
+				24000,
+				false);
+	
+			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(outputWave));
+	
+			DataLine.Info dataLineInfo = new DataLine.Info(SourceDataLine.class,
+			        audioFormat, AudioSystem.NOT_SPECIFIED);
+			SourceDataLine sourceDataLine = (SourceDataLine) AudioSystem
+			        .getLine(dataLineInfo);
+			sourceDataLine.open(audioFormat);
+			sourceDataLine.start();
+			System.out.println("start to play the wave:");
+			/*
+			 * read the audio data and send to mixer
+			 */
+	        int count;
+	        byte tempBuffer[] = new byte[4096];
+	        while ((count = audioInputStream.read(tempBuffer, 0, tempBuffer.length)) >0) {
+	                sourceDataLine.write(tempBuffer, 0, count);
+	        }
+	 
+	        sourceDataLine.drain();
+	        sourceDataLine.close();
+	        audioInputStream.close();
+	        
 	     }catch(Exception e){
 	     	e.printStackTrace();
 	     }
@@ -512,9 +564,13 @@ public class ConversationAIPipelineSDK {
 	
     public static void main(String[] args) {
 
+    	// Add all supported language
     	Map<String, String> languageMap = new HashMap<String, String>();
     	languageMap.put("en", "en-US");
-
+    	languageMap.put("fr", "fr-FR");
+    	
+    	
+    	
         System.out.println(
                 "Please try to ask one of below questions: \n"          
         		+ "1, \"find flights to London in first class\" (ans: london in first class, testing testing) \n"
@@ -532,9 +588,14 @@ public class ConversationAIPipelineSDK {
    		// Step 2: Text Analytics (Language Detection)
    		String TEXT_ANALYSTICS = System.getenv("TextAnalytics");
    		System.out.println("\n---------------Step 2: Text Analytics---------------");
-   		String detectLangResp = detactFirstLanguage(recognizedText, TEXT_ANALYSTICS);
-   		System.out.println("detect language = " + detectLangResp);
-
+   		String detectLangResp="";
+   		try {
+   			detectLangResp = detactFirstLanguage(recognizedText, TEXT_ANALYSTICS);
+	   		System.out.println("detect language = " + detectLangResp);
+   		} catch (Exception ex) {
+   			System.out.println("<Text Analytics> " + ex.getMessage());
+   			System.exit(1);
+   		}
    		// Step 3: Text Translator (Translate Text)        // Missing Translator SDK in Maven repo
 		String TRANSLATOR = System.getenv("Translator");
    		System.out.println("\n---------------Step 3: Text Translator------[SDK MISSING]---------");
@@ -572,14 +633,14 @@ public class ConversationAIPipelineSDK {
    		/**
    		 *  	3, Generate Output
    		 **/
-   			// Step 8: Text Translater (Translate Text)    	    	    		 // Missing Translator SDK in Maven repo
-   	    	System.out.println("\n---------------Step 8: Text Translator------[SDK MISSING]---------");
+   			// Step 8: Text Translater (Translate Text)    	    	 
+   	    	System.out.println("\n---------------Step 8: Text Translator------[SDK MISSING]---------");   	    	
    	    	topAns = translateText(topAns, detectLangResp, TRANSLATOR);
    	    	System.out.println("translated top ans is, " + topAns);
    			
    			// Step 9: Speech Service (Text To Speech)						// Missing SDK API, there are some classes are missing but found AudioInputStrean class
    	    	System.out.println("\n---------------Step 9: Text to Speech-------[SDK MISSING]--------");
-    		textToSpeech(topAns, SPEECH);
+    		textToSpeech(topAns, languageMap.get(detectLangResp), SPEECH);
    			
    			System.out.println("---------------- End of Conversation AI Pipeline --------------------");
     }
